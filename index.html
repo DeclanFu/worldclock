@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Pulse: Clock & Weather</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-glow: #38bdf8;
+            --accent-purple: #a855f7;
+            --weather-glow: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            width: 100%;
+            max-width: 600px;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, var(--accent-glow), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 16px 24px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 50px;
+            color: var(--text-main);
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+            outline: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-container input:focus {
+            border-color: var(--accent-glow);
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
+            transform: scale(1.02);
+        }
+
+        .clock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .clock-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cardAppear 0.5s ease-out forwards;
+        }
+
+        .clock-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: var(--accent-glow);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(56, 189, 248, 0.15);
+        }
+
+        .clock-card.hidden {
+            display: none !important;
+        }
+
+        .city-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .country-name {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .time {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #ffffff;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Weather Section Inside Card */
+        .weather-box {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 0.75rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .clock-card:hover .weather-box {
+            color: var(--text-main);
+        }
+
+        .weather-temp {
+            font-weight: 700;
+            color: var(--weather-glow);
+        }
+
+        .click-hint {
+            font-size: 0.75rem;
+            color: var(--accent-purple);
+            text-align: right;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes cardAppear {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 2rem 1rem; }
+            h1 { font-size: 2.2rem; }
+            .clock-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Global Pulse</h1>
+        <p class="subtitle">Live World Clocks & Real-time Weather</p>
+        <div class="search-container">
+            <input type="text" id="search-bar" placeholder="Search any country or city...">
+        </div>
+    </header>
+
+    <main class="clock-grid" id="clock-grid">
+        </main>
+
+    <script>
+        // Giant list representing major hubs covering practically every region globally
+        const locations = [
+            { city: "Kabul", country: "Afghanistan", zone: "Asia/Kabul" },
+            { city: "Tirana", country: "Albania", zone: "Europe/Tirane" },
+            { city: "Algiers", country: "Algeria", zone: "Africa/Algiers" },
+            { city: "Andorra la Vella", country: "Andorra", zone: "Europe/Andorra" },
+            { city: "Luanda", country: "Angola", zone: "Africa/Luanda" },
+            { city: "Buenos Aires", country: "Argentina", zone: "America/Argentina/Buenos_Aires" },
+            { city: "Yerevan", country: "Armenia", zone: "Asia/Yerevan" },
+            { city: "Sydney", country: "Australia", zone: "Australia/Sydney" },
+            { city: "Vienna", country: "Austria", zone: "Europe/Vienna" },
+            { city: "Baku", country: "Azerbaijan", zone: "Asia/Baku" },
+            { city: "Nassau", country: "Bahamas", zone: "America/Nassau" },
+            { city: "Dhaka", country: "Bangladesh", zone: "Asia/Dhaka" },
+            { city: "Brussels", country: "Belgium", zone: "Europe/Brussels" },
+            { city: "Sarajevo", country: "Bosnia and Herzegovina", zone: "Europe/Sarajevo" },
+            { city: "São Paulo", country: "Brazil", zone: "America/Sao_Paulo" },
+            { city: "Sofia", country: "Bulgaria", zone: "Europe/Sofia" },
+            { city: "Phnom Penh", country: "Cambodia", zone: "Asia/Phnom_Penh" },
+            { city: "Toronto", country: "Canada", zone: "America/Toronto" },
+            { city: "Santiago", country: "Chile", zone: "America/Santiago" },
+            { city: "Shanghai", country: "China", zone: "Asia/Shanghai" },
+            { city: "Hong Kong", country: "China", zone: "Asia/Hong_Kong" },
+            { city: "Bogotá", country: "Colombia", zone: "America/Bogota" },
+            { city: "San José", country: "Costa Rica", zone: "America/Costa_Rica" },
+            { city: "Havana", country: "Cuba", zone: "America/Havana" },
+            { city: "Prague", country: "Czech Republic", zone: "Europe/Prague" },
+            { city: "Copenhagen", country: "Denmark", zone: "Europe/Copenhagen" },
+            { city: "Cairo", country: "Egypt", zone: "Africa/Cairo" },
+            { city: "Addis Ababa", country: "Ethiopia", zone: "Africa/Addis_Ababa" },
+            { city: "Helsinki", country: "Finland", zone: "Europe/Helsinki" },
+            { city: "Paris", country: "France", zone: "Europe/Paris" },
+            { city: "Tbilisi", country: "Georgia", zone: "Asia/Tbilisi" },
+            { city: "Berlin", country: "Germany", zone: "Europe/Berlin" },
+            { city: "Athens", country: "Greece", zone: "Europe/Athens" },
+            { city: "Guatemala City", country: "Guatemala", zone: "America/Guatemala" },
+            { city: "Budapest", country: "Hungary", zone: "Europe/Budapest" },
+            { city: "Reykjavik", country: "Iceland", zone: "Atlantic/Reykjavik" },
+            { city: "Mumbai", country: "India", zone: "Asia/Kolkata" },
+            { city: "Jakarta", country: "Indonesia", zone: "Asia/Jakarta" },
+            { city: "Tehran", country: "Iran", zone: "Asia/Tehran" },
+            { city: "Dublin", country: "Ireland", zone: "Europe/Dublin" },
+            { city: "Jerusalem", country: "Israel", zone: "Asia/Jerusalem" },
+            { city: "Rome", country: "Italy", zone: "Europe/Rome" },
+            { city: "Kingston", country: "Jamaica", zone: "America/Kingston" },
+            { city: "Tokyo", country: "Japan", zone: "Asia/Tokyo" },
+            { city: "Amman", country: "Jordan", zone: "Asia/Amman" },
+            { city: "Astana", country: "Kazakhstan", zone: "Asia/Almaty" },
+            { city: "Nairobi", country: "Kenya", zone: "Africa/Nairobi" },
+            { city: "Seoul", country: "South Korea", zone: "Asia/Seoul" },
+            { city: "Kuwait City", country: "Kuwait", zone: "Asia/Kuwait" },
+            { city: "Beirut", country: "Lebanon", zone: "Asia/Beirut" },
+            { city: "Antananarivo", country: "Madagascar", zone: "Indian/Antananarivo" },
+            { city: "Kuala Lumpur", country: "Malaysia", zone: "Asia/Kuala_Lumpur" },
+            { city: "Malé", country: "Maldives", zone: "Indian/Maldives" },
+            { city: "Mexico City", country: "Mexico", zone: "America/Mexico_City" },
+            { city: "Monaco", country: "Monaco", zone: "Europe/Monaco" },
+            { city: "Ulaanbaatar", country: "Mongolia", zone: "Asia/Ulaanbaatar" },
+            { city: "Casablanca", country: "Morocco", zone: "Africa/Casablanca" },
+            { city: "Kathmandu", country: "Nepal", zone: "Asia/Kathmandu" },
+            { city: "Amsterdam", country: "Netherlands", zone: "Europe/Amsterdam" },
+            { city: "Auckland", country: "New Zealand", zone: "Pacific/Auckland" },
+            { city: "Lagos", country: "Nigeria", zone: "Africa/Lagos" },
+            { city: "Oslo", country: "Norway", zone: "Europe/Oslo" },
+            { city: "Muscat", country: "Oman", zone: "Asia/Muscat" },
+            { city: "Karachi", country: "Pakistan", zone: "Asia/Karachi" },
+            { city: "Panama City", country: "Panama", zone: "America/Panama" },
+            { city: "Lima", country: "Peru", zone: "America/Lima" },
+            { city: "Manila", country: "Philippines", zone: "Asia/Manila" },
+            { city: "Warsaw", country: "Poland", zone: "Europe/Warsaw" },
+            { city: "Lisbon", country: "Portugal", zone: "Europe/Lisbon" },
+            { city: "Doha", country: "Qatar", zone: "Asia/Qatar" },
+            { city: "Bucharest", country: "Romania", zone: "Europe/Bucharest" },
+            { city: "Moscow", country: "Russia", zone: "Europe/Moscow" },
+            { city: "Riyadh", country: "Saudi Arabia", zone: "Asia/Riyadh" },
+            { city: "Dakar", country: "Senegal", zone: "Africa/Dakar" },
+            { city: "Belgrade", country: "Serbia", zone: "Europe/Belgrade" },
+            { city: "Singapore", country: "Singapore", zone: "Asia/Singapore" },
+            { city: "Cape Town", country: "South Africa", zone: "Africa/Johannesburg" },
+            { city: "Madrid", country: "Spain", zone: "Europe/Madrid" },
+            { city: "Colombo", country: "Sri Lanka", zone: "Asia/Colombo" },
+            { city: "Stockholm", country: "Sweden", zone: "Europe/Stockholm" },
+            { city: "Zürich", country: "Switzerland", zone: "Europe/Zurich" },
+            { city: "Bangkok", country: "Thailand", zone: "Asia/Bangkok" },
+            { city: "Tunis", country: "Tunisia", zone: "Africa/Tunis" },
+            { city: "Istanbul", country: "Turkey", zone: "Europe/Istanbul" },
+            { city: "Dubai", country: "UAE", zone: "Asia/Dubai" },
+            { city: "London", country: "United Kingdom", zone: "Europe/London" },
+            { city: "New York", country: "United States", zone: "America/New_York" },
+            { city: "Los Angeles", country: "United States", zone: "America/Los_Angeles" },
+            { city: "Montevideo", country: "Uruguay", zone: "America/Montevideo" },
+            { city: "Tashkent", country: "Uzbekistan", zone: "Asia/Tashkent" },
+            { city: "Caracas", country: "Venezuela", zone: "America/Caracas" },
+            { city: "Hanoi", country: "Vietnam", zone: "Asia/Hanoi" }
+        ];
+
+        const clockGrid = document.getElementById('clock-grid');
+        const searchBar = document.getElementById('search-bar');
+
+        // Create elements systematically
+        function initGrid() {
+            locations.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'clock-card';
+                card.style.animationDelay = `${Math.min(index * 0.02, 1.5)}s`;
+                card.setAttribute('data-city', item.city.toLowerCase());
+                card.setAttribute('data-country', item.country.toLowerCase());
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="city-name">${item.city}</div>
+                        <div class="country-name">${item.country}</div>
+                    </div>
+                    <div>
+                        <div class="time" id="time-${index}">--:--:--</div>
+                        <div class="date" id="date-${index}">Syncing...</div>
+                    </div>
+                    <div class="weather-box" id="weather-${index}">
+                        <span>Click for Weather</span>
+                        <span class="click-hint">➔</span>
+                    </div>
+                `;
+
+                // Weather click binding
+                card.addEventListener('click', () => fetchWeather(item.city, index));
+                clockGrid.appendChild(card);
+            });
+        }
+
+        // Live Clock Tick
+        function tick() {
+            const now = new Date();
+            locations.forEach((item, index) => {
+                try {
+                    const timeEl = document.getElementById(`time-${index}`);
+                    const dateEl = document.getElementById(`date-${index}`);
+                    
+                    if (timeEl) {
+                        timeEl.textContent = new Intl.DateTimeFormat('en-US', {
+                            timeZone: item.zone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+                        }).format(now);
+                    }
+                    if (dateEl) {
+                        dateEl.textContent = new Intl.DateTimeFormat('en-US', {
+                            timeZone: item.zone, weekday: 'short', month: 'short', day: 'numeric'
+                        }).format(now);
+                    }
+                } catch(e) {}
+            });
+        }
+
+        // Fetch weather dynamically using open-meteo (Free public API, no access tokens required!)
+        async function fetchWeather(city, index) {
+            const weatherBox = document.getElementById(`weather-${index}`);
+            weatherBox.innerHTML = `<span>Loading weather...</span>`;
+            
+            try {
+                // Step 1: Convert City name to GPS Coordinates via geocoding API
+                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+                const geoRes = await fetch(geoUrl);
+                const geoData = await geoRes.json();
+                
+                if (!geoData.results || geoData.results.length === 0) {
+                    weatherBox.innerHTML = `<span>City not found</span>`;
+                    return;
+                }
+                
+                const { latitude, longitude } = geoData.results[0];
+                
+                // Step 2: Grab live weather using the coordinates
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
+                const weatherRes = await fetch(weatherUrl);
+                const weatherData = await weatherRes.json();
+                
+                const temp = Math.round(weatherData.current_weather.temperature);
+                const code = weatherData.current_weather.weathercode;
+                
+                // Simplified condition codes mapping
+                let condition = "Clear";
+                if (code > 0 && code <= 3) condition = "Partly Cloudy";
+                if (code >= 45 && code <= 48) condition = "Foggy";
+                if (code >= 51 && code <= 67) condition = "Raining";
+                if (code >= 71 && code <= 77) condition = "Snowing";
+                if (code >= 80 && code <= 82) condition = "Showers";
+                if (code >= 95) condition = "Stormy";
+
+                weatherBox.innerHTML = `
+                    <span>${condition}</span>
+                    <span class="weather-temp">${temp}°C</span>
+                `;
+            } catch (error) {
+                weatherBox.innerHTML = `<span>Error loading</span>`;
+                console.error(error);
+            }
+        }
+
+        // Live Real-Time Filtering
+        searchBar.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.clock-card');
+
+            cards.forEach(card => {
+                const city = card.getAttribute('data-city');
+                const country = card.getAttribute('data-country');
+                if (city.includes(query) || country.includes(query)) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        });
+
+        // Initialize App securely
+        initGrid();
+        tick();
+        setInterval(tick, 1000);
+    </script>
+</body>
+</html>
